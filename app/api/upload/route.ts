@@ -1,9 +1,69 @@
 import { NextRequest, NextResponse } from "next/server"
-import { uploadImage } from "@/lib/cloudinary"
+
+// Configurar runtime para Vercel
+export const runtime = 'nodejs'
+export const maxDuration = 30
+
+// Importación dinámica para evitar errores al cargar el módulo
+async function uploadImageToCloudinary(file: File | Blob, folder: string = 'noty-app'): Promise<string> {
+  try {
+    // Importación dinámica de cloudinary
+    const { v2: cloudinary } = await import('cloudinary')
+    
+    // Verificar variables de entorno
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+    const apiKey = process.env.CLOUDINARY_API_KEY
+    const apiSecret = process.env.CLOUDINARY_API_SECRET
+
+    if (!cloudName || !apiKey || !apiSecret) {
+      throw new Error('Cloudinary configuration is missing. Please check environment variables.')
+    }
+
+    // Configurar Cloudinary
+    cloudinary.config({
+      cloud_name: cloudName,
+      api_key: apiKey,
+      api_secret: apiSecret,
+    })
+
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+
+    return new Promise((resolve, reject) => {
+      cloudinary.uploader
+        .upload_stream(
+          {
+            folder,
+            resource_type: 'image',
+            transformation: [
+              {
+                quality: 'auto',
+                fetch_format: 'auto',
+              },
+            ],
+          },
+          (error, result) => {
+            if (error) {
+              console.error('Cloudinary upload error:', error)
+              reject(new Error(error.message || 'Failed to upload image to Cloudinary'))
+            } else if (result && result.secure_url) {
+              resolve(result.secure_url)
+            } else {
+              reject(new Error('Upload failed: No URL returned from Cloudinary'))
+            }
+          }
+        )
+        .end(buffer)
+    })
+  } catch (importError: any) {
+    console.error('Error importing or configuring Cloudinary:', importError)
+    throw new Error(`Failed to initialize Cloudinary: ${importError.message}`)
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
-    // Verificar que las variables de entorno estén configuradas
+    // Verificar que las variables de entorno estén configuradas primero
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
     const apiKey = process.env.CLOUDINARY_API_KEY
     const apiSecret = process.env.CLOUDINARY_API_SECRET
@@ -42,7 +102,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("Starting image upload to Cloudinary...")
-    const url = await uploadImage(file, "noty-app")
+    const url = await uploadImageToCloudinary(file, "noty-app")
     console.log("Image uploaded successfully:", url)
 
     if (!url) {
@@ -52,11 +112,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ url })
   } catch (error: any) {
     console.error("Upload error:", error)
-    console.error("Error stack:", error.stack)
+    console.error("Error stack:", error?.stack)
+    
+    // Asegurar que siempre devolvamos JSON, nunca HTML
     return NextResponse.json(
       { 
-        error: error.message || "Upload failed. Please try again.",
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        error: error?.message || "Upload failed. Please try again.",
+        details: process.env.NODE_ENV === 'development' ? error?.stack : undefined
       },
       { status: 500 }
     )
