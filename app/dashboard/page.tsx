@@ -58,23 +58,41 @@ export default function DashboardPage() {
         return
       }
 
-      const { data, error } = await supabase
+      // Cargar todas las notas del usuario
+      const { data: allNotes, error: notesError } = await supabase
         .from("notes")
         .select("*")
         .eq("user_id", user.id)
         .order("updated_at", { ascending: false })
 
-      if (error) {
-        console.error("Error loading notes:", error)
+      if (notesError) {
+        console.error("Error loading notes:", notesError)
         toast({
           title: "Error",
-          description: error.message || "No se pudieron cargar las notas. Verifica tus permisos en Supabase.",
+          description: notesError.message || "No se pudieron cargar las notas. Verifica tus permisos en Supabase.",
           variant: "destructive",
         })
         setNotes([])
-      } else {
-        setNotes(data || [])
+        return
       }
+
+      // Obtener las IDs de las notas que están compartidas
+      const { data: sharedNotesData } = await supabase
+        .from("shared_notes")
+        .select("note_id")
+        .eq("owner_id", user.id)
+
+      // Crear un Set con las IDs de notas compartidas para búsqueda rápida
+      const sharedNoteIds = new Set(
+        (sharedNotesData || []).map((share: any) => share.note_id)
+      )
+
+      // Filtrar las notas para excluir las que están compartidas
+      const ownNotes = (allNotes || []).filter(
+        (note) => !sharedNoteIds.has(note.id)
+      )
+
+      setNotes(ownNotes)
     } catch (err: any) {
       console.error("Unexpected error:", err)
       toast({
