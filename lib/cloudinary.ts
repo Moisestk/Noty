@@ -1,12 +1,24 @@
 import { v2 as cloudinary } from 'cloudinary'
 
-cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-})
+// Configurar Cloudinary solo si las variables de entorno están disponibles
+if (process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME && 
+    process.env.CLOUDINARY_API_KEY && 
+    process.env.CLOUDINARY_API_SECRET) {
+  cloudinary.config({
+    cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  })
+}
 
 export async function uploadImage(file: File | Blob, folder: string = 'noty-app'): Promise<string> {
+  // Verificar que las variables de entorno estén configuradas
+  if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 
+      !process.env.CLOUDINARY_API_KEY || 
+      !process.env.CLOUDINARY_API_SECRET) {
+    throw new Error('Cloudinary configuration is missing. Please check environment variables.')
+  }
+
   const arrayBuffer = await file.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
 
@@ -25,11 +37,12 @@ export async function uploadImage(file: File | Blob, folder: string = 'noty-app'
         },
         (error, result) => {
           if (error) {
-            reject(error)
-          } else if (result) {
+            console.error('Cloudinary upload error:', error)
+            reject(new Error(error.message || 'Failed to upload image to Cloudinary'))
+          } else if (result && result.secure_url) {
             resolve(result.secure_url)
           } else {
-            reject(new Error('Upload failed'))
+            reject(new Error('Upload failed: No URL returned from Cloudinary'))
           }
         }
       )

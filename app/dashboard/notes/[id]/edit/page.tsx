@@ -88,19 +88,28 @@ export default function EditNotePage() {
           })
           
           if (!response.ok) {
-            const errorData = await response.json()
-            throw new Error(errorData.error || "Error al subir la imagen")
+            let errorMessage = "Error al subir la imagen"
+            try {
+              const errorData = await response.json()
+              errorMessage = errorData.error || errorMessage
+            } catch (e) {
+              // Si la respuesta no es JSON, usar el texto de la respuesta
+              const text = await response.text()
+              errorMessage = text || `Error del servidor (${response.status})`
+            }
+            throw new Error(errorMessage)
           }
           
           const data = await response.json()
-          if (!data.url) {
+          if (!data || !data.url) {
             throw new Error("No se recibió la URL de la imagen")
           }
           coverImageUrl = data.url
         } catch (uploadError: any) {
+          console.error("Upload error:", uploadError)
           toast({
             title: "Error al subir imagen",
-            description: uploadError.message || "No se pudo subir la imagen",
+            description: uploadError.message || "No se pudo subir la imagen. Verifica tu conexión y las variables de entorno de Cloudinary.",
             variant: "destructive",
           })
           setIsSaving(false)

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Plus, Grid3x3, List, ListChecks, Search } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
@@ -29,6 +30,8 @@ export default function DashboardPage() {
   const [notes, setNotes] = useState<Note[]>([])
   const [filteredNotes, setFilteredNotes] = useState<Note[]>([])
   const [viewMode, setViewMode] = useState<ViewMode>("cards")
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [noteToDelete, setNoteToDelete] = useState<string | null>(null)
   const { searchQuery, setSearchQuery } = useSearch()
   const router = useRouter()
   const supabase = createClient()
@@ -104,10 +107,15 @@ export default function DashboardPage() {
   }
 
 
-  const handleDeleteNote = async (noteId: string) => {
-    if (!confirm("¿Estás seguro de eliminar esta nota?")) return
+  const handleDeleteNote = (noteId: string) => {
+    setNoteToDelete(noteId)
+    setIsDeleteDialogOpen(true)
+  }
 
-    const { error } = await supabase.from("notes").delete().eq("id", noteId)
+  const confirmDeleteNote = async () => {
+    if (!noteToDelete) return
+
+    const { error } = await supabase.from("notes").delete().eq("id", noteToDelete)
 
     if (error) {
       toast({
@@ -122,6 +130,9 @@ export default function DashboardPage() {
       })
       loadNotes()
     }
+
+    setIsDeleteDialogOpen(false)
+    setNoteToDelete(null)
   }
 
   return (
@@ -261,6 +272,34 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Modal de confirmación para eliminar nota */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>¿Eliminar nota?</DialogTitle>
+            <DialogDescription>
+              Esta acción no se puede deshacer. La nota será eliminada permanentemente.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDeleteDialogOpen(false)
+                setNoteToDelete(null)
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteNote}
+            >
+              Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
