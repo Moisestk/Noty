@@ -70,9 +70,10 @@ export default function NewSharedNotePage() {
         return
       }
 
-      const query = userSearchQuery.trim().toLowerCase()
+      const query = userSearchQuery.trim()
       
-      // Buscar por email o nombre completo
+      // Buscar por email o nombre completo (case insensitive)
+      // Usamos ilike para búsqueda case-insensitive
       const { data, error } = await supabase
         .from("profiles")
         .select("id, email, full_name, avatar_url")

@@ -139,6 +139,11 @@ CREATE POLICY "Users can view their own profile"
   ON public.profiles FOR SELECT
   USING (auth.uid() = id);
 
+-- Política para permitir buscar otros usuarios (necesario para compartir notas)
+CREATE POLICY "Users can search other profiles"
+  ON public.profiles FOR SELECT
+  USING (auth.uid() IS NOT NULL);
+
 CREATE POLICY "Users can update their own profile"
   ON public.profiles FOR UPDATE
   USING (auth.uid() = id);
