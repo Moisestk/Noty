@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Moon, Sun, LogOut, User, Settings, X } from "lucide-react"
+import { Moon, Sun, LogOut, User, X } from "lucide-react"
 import { useTheme } from "next-themes"
 import Link from "next/link"
 import { useSearch } from "@/contexts/search-context"
@@ -134,12 +134,6 @@ export function Navbar() {
                 <Link href="/profile" className="cursor-pointer">
                   <User className="mr-2 h-4 w-4" />
                   <span>Perfil</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/settings" className="cursor-pointer">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Configuración</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
