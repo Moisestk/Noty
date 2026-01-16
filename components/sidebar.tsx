@@ -44,15 +44,17 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Botón móvil para abrir sidebar */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="fixed left-4 top-4 z-[60] lg:hidden bg-background/80 backdrop-blur"
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
-      >
-        <Menu className="h-5 w-5" />
-      </Button>
+      {/* Botón móvil para abrir sidebar - solo visible cuando sidebar está cerrado */}
+      {!isMobileOpen && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="fixed left-4 top-4 z-[60] lg:hidden bg-background/80 backdrop-blur"
+          onClick={() => setIsMobileOpen(!isMobileOpen)}
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+      )}
 
       {/* Overlay para móvil */}
       <AnimatePresence>
@@ -83,6 +85,15 @@ export function Sidebar() {
           {/* Header con logo y nombre */}
           <div className="flex h-16 items-center justify-between border-b px-4">
             <div className="flex items-center gap-3">
+              {/* Botón de cerrar en móvil */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden"
+                onClick={() => setIsMobileOpen(false)}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
               <div className="relative h-10 w-10 shrink-0">
                 <Image
                   src={currentTheme === "dark" ? "/img/logo blanco.png" : "/img/logo azul.png"}
