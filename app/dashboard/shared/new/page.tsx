@@ -42,30 +42,54 @@ export default function NewSharedNotePage() {
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false)
 
   useEffect(() => {
-    if (userSearchQuery.trim().length > 2) {
-      searchUsers()
-    } else {
-      setSearchResults([])
-    }
-  }, [userSearchQuery])
+    const timeoutId = setTimeout(() => {
+      if (userSearchQuery.trim().length > 2) {
+        searchUsers()
+      } else {
+        setSearchResults([])
+      }
+    }, 300) // Debounce de 300ms
+
+    return () => clearTimeout(timeoutId)
+  }, [userSearchQuery, selectedUsers])
 
   const searchUsers = async () => {
+    if (!userSearchQuery.trim() || userSearchQuery.trim().length < 3) {
+      setSearchResults([])
+      return
+    }
+
     setIsSearching(true)
     try {
       const {
         data: { user: currentUser },
       } = await supabase.auth.getUser()
 
-      if (!currentUser) return
+      if (!currentUser) {
+        setSearchResults([])
+        return
+      }
 
+      const query = userSearchQuery.trim().toLowerCase()
+      
+      // Buscar por email o nombre completo
       const { data, error } = await supabase
         .from("profiles")
         .select("id, email, full_name, avatar_url")
-        .or(`email.ilike.%${userSearchQuery}%,full_name.ilike.%${userSearchQuery}%`)
+        .or(`email.ilike.%${query}%,full_name.ilike.%${query}%`)
         .neq("id", currentUser.id)
         .limit(10)
 
-      if (error) throw error
+      if (error) {
+        console.error("Error searching users:", error)
+        toast({
+          title: "Error",
+          description: "No se pudo buscar usuarios. Intenta nuevamente.",
+          variant: "destructive",
+        })
+        setSearchResults([])
+        return
+      }
 
       // Filtrar usuarios que ya están seleccionados
       const filtered = (data || []).filter(
@@ -75,6 +99,12 @@ export default function NewSharedNotePage() {
       setSearchResults(filtered)
     } catch (error: any) {
       console.error("Error searching users:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Error al buscar usuarios",
+        variant: "destructive",
+      })
+      setSearchResults([])
     } finally {
       setIsSearching(false)
     }
@@ -226,15 +256,15 @@ export default function NewSharedNotePage() {
           <div className="flex items-center gap-1 sm:gap-2 flex-1 justify-end min-w-0">
             {/* Usuarios seleccionados */}
             {selectedUsers.length > 0 && (
-              <div className="hidden sm:flex items-center gap-2 mr-2 overflow-x-auto max-w-[200px] lg:max-w-none">
+              <div className="flex items-center gap-1 sm:gap-2 mr-1 sm:mr-2 overflow-x-auto max-w-[150px] sm:max-w-[200px] lg:max-w-none">
                 {selectedUsers.map((user) => (
                   <div
                     key={user.id}
-                    className="flex items-center gap-1 sm:gap-2 rounded-full border bg-background px-2 sm:px-3 py-1.5 shrink-0"
+                    className="flex items-center gap-1 sm:gap-2 rounded-full border bg-background px-1.5 sm:px-3 py-1 sm:py-1.5 shrink-0"
                   >
-                    <Avatar className="h-5 w-5 sm:h-6 sm:w-6">
+                    <Avatar className="h-4 w-4 sm:h-6 sm:w-6">
                       <AvatarImage src={user.avatar_url || undefined} />
-                      <AvatarFallback className="text-xs">
+                      <AvatarFallback className="text-[10px] sm:text-xs">
                         {user.full_name
                           ?.split(" ")
                           .map((n) => n[0])
@@ -242,11 +272,13 @@ export default function NewSharedNotePage() {
                           .toUpperCase() || user.email[0].toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-xs sm:text-sm truncate max-w-[80px] sm:max-w-none">{user.full_name || user.email}</span>
+                    <span className="text-[10px] sm:text-sm truncate max-w-[50px] sm:max-w-[80px] lg:max-w-none hidden sm:inline">
+                      {user.full_name || user.email}
+                    </span>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-4 w-4 sm:h-5 sm:w-5"
+                      className="h-3 w-3 sm:h-5 sm:w-5"
                       onClick={() => handleRemoveUser(user.id)}
                     >
                       <X className="h-2 w-2 sm:h-3 sm:w-3" />
@@ -390,8 +422,15 @@ export default function NewSharedNotePage() {
               />
             </div>
 
+            {/* Indicador de carga */}
+            {isSearching && (
+              <p className="text-sm text-muted-foreground text-center py-2">
+                Buscando usuarios...
+              </p>
+            )}
+
             {/* Resultados de búsqueda */}
-            {searchResults.length > 0 && (
+            {!isSearching && searchResults.length > 0 && (
               <Card>
                 <CardContent className="p-2 max-h-[300px] overflow-y-auto">
                   <div className="space-y-1">
@@ -399,7 +438,7 @@ export default function NewSharedNotePage() {
                       <Button
                         key={user.id}
                         variant="ghost"
-                        className="w-full justify-start gap-2"
+                        className="w-full justify-start gap-2 hover:bg-muted"
                         onClick={() => {
                           handleAddUser(user)
                           setIsUserDialogOpen(false)
@@ -415,11 +454,11 @@ export default function NewSharedNotePage() {
                               .toUpperCase() || user.email[0].toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="flex flex-col items-start">
-                          <span className="text-sm font-medium">
+                        <div className="flex flex-col items-start flex-1 min-w-0">
+                          <span className="text-sm font-medium truncate w-full">
                             {user.full_name || "Sin nombre"}
                           </span>
-                          <span className="text-xs text-muted-foreground">{user.email}</span>
+                          <span className="text-xs text-muted-foreground truncate w-full">{user.email}</span>
                         </div>
                       </Button>
                     ))}
@@ -428,15 +467,17 @@ export default function NewSharedNotePage() {
               </Card>
             )}
 
-            {userSearchQuery.trim().length > 2 && searchResults.length === 0 && !isSearching && (
+            {/* Mensaje cuando no hay resultados */}
+            {!isSearching && userSearchQuery.trim().length > 2 && searchResults.length === 0 && (
               <p className="text-sm text-muted-foreground text-center py-2">
-                No se encontraron usuarios
+                No se encontraron usuarios con &quot;{userSearchQuery}&quot;
               </p>
             )}
 
-            {userSearchQuery.trim().length <= 2 && (
+            {/* Mensaje inicial */}
+            {!isSearching && userSearchQuery.trim().length <= 2 && (
               <p className="text-sm text-muted-foreground text-center py-2">
-                Escribe al menos 3 caracteres para buscar
+                Escribe al menos 3 caracteres para buscar usuarios por nombre o email
               </p>
             )}
           </div>
