@@ -9,6 +9,14 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "NotyApp - Notas y Tareas",
   description: "Aplicación moderna de notas y tareas con colaboración",
+  icons: {
+    icon: [
+      { url: "/img/logo azul.ico", type: "image/x-icon" },
+      { url: "/img/logo azul.png", type: "image/png" },
+    ],
+    shortcut: "/img/logo azul.ico",
+    apple: "/img/logo azul.png",
+  },
 }
 
 export default function RootLayout({
@@ -18,6 +26,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/img/logo azul.ico" type="image/x-icon" />
+        <link rel="shortcut icon" href="/img/logo azul.ico" type="image/x-icon" />
+        <link rel="apple-touch-icon" href="/img/logo azul.png" />
+      </head>
       <body className={inter.className}>
         <Providers>
           {children}
