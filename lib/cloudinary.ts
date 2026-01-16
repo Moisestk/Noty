@@ -1,23 +1,28 @@
 import { v2 as cloudinary } from 'cloudinary'
 
-// Configurar Cloudinary solo si las variables de entorno están disponibles
-if (process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME && 
-    process.env.CLOUDINARY_API_KEY && 
-    process.env.CLOUDINARY_API_SECRET) {
+// Función para configurar Cloudinary (se llama en cada uso para asegurar que las variables estén disponibles)
+function configureCloudinary() {
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+  const apiKey = process.env.CLOUDINARY_API_KEY
+  const apiSecret = process.env.CLOUDINARY_API_SECRET
+
+  if (!cloudName || !apiKey || !apiSecret) {
+    throw new Error('Cloudinary configuration is missing. Please check environment variables.')
+  }
+
+  // Configurar cada vez para asegurar que las variables estén disponibles
   cloudinary.config({
-    cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
+    cloud_name: cloudName,
+    api_key: apiKey,
+    api_secret: apiSecret,
   })
+
+  return { cloudName, apiKey, apiSecret }
 }
 
 export async function uploadImage(file: File | Blob, folder: string = 'noty-app'): Promise<string> {
-  // Verificar que las variables de entorno estén configuradas
-  if (!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 
-      !process.env.CLOUDINARY_API_KEY || 
-      !process.env.CLOUDINARY_API_SECRET) {
-    throw new Error('Cloudinary configuration is missing. Please check environment variables.')
-  }
+  // Configurar Cloudinary antes de usar
+  configureCloudinary()
 
   const arrayBuffer = await file.arrayBuffer()
   const buffer = Buffer.from(arrayBuffer)
@@ -38,6 +43,11 @@ export async function uploadImage(file: File | Blob, folder: string = 'noty-app'
         (error, result) => {
           if (error) {
             console.error('Cloudinary upload error:', error)
+            console.error('Error details:', {
+              message: error.message,
+              http_code: error.http_code,
+              name: error.name,
+            })
             reject(new Error(error.message || 'Failed to upload image to Cloudinary'))
           } else if (result && result.secure_url) {
             resolve(result.secure_url)
