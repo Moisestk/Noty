@@ -156,7 +156,7 @@ export default function NewTaskPage() {
           {checklistItems.length === 0 ? (
             <div className="rounded-lg border border-dashed p-8 text-center">
               <p className="text-muted-foreground mb-4">
-                No hay items en el checklist. Haz clic en "Agregar item" para comenzar.
+                No hay items en el checklist. Haz clic en &quot;Agregar item&quot; para comenzar.
               </p>
             </div>
           ) : (

@@ -134,41 +134,6 @@ export default function TasksPage() {
     setFilteredTasks(filtered)
   }
 
-  const handleAddTask = async () => {
-    if (!newTaskTitle.trim()) {
-      toast({
-        title: "Error",
-        description: "Escribe el título de la tarea",
-        variant: "destructive",
-      })
-      return
-    }
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) return
-
-    const { error } = await supabase.from("user_tasks").insert({
-      user_id: user.id,
-      title: newTaskTitle,
-      completed: false,
-      order_index: 0,
-    })
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: "No se pudo agregar la tarea",
-        variant: "destructive",
-      })
-    } else {
-      setNewTaskTitle("")
-      loadTasks()
-    }
-  }
-
   const calculateProgress = (task: UserTask): number => {
     if (!task.checklist_items || task.checklist_items.length === 0) {
       return task.completed ? 100 : 0
