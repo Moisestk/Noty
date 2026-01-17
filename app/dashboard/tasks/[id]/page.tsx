@@ -223,7 +223,7 @@ export default function TaskDetailPage() {
       {/* Barra superior */}
       <div className="flex items-center justify-between px-2 sm:px-0">
         <Button variant="ghost" size="icon" onClick={() => router.back()}>
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4" strokeWidth={2.5} />
         </Button>
         <div className="flex items-center gap-1 sm:gap-2">
           <Button 
@@ -356,7 +356,7 @@ export default function TaskDetailPage() {
                         onClick={() => handleDeleteChecklistItem(item.id)}
                         className="text-destructive"
                       >
-                        <X className="mr-2 h-4 w-4" />
+                        <X className="mr-2 h-4 w-4" strokeWidth={2.5} />
                         Eliminar
                       </DropdownMenuItem>
                     </DropdownMenuContent>
