@@ -44,16 +44,35 @@ export default function LoginPage() {
 
     if (data.session) {
       // Asegurar que la sesión se guarde correctamente
-      // Esperar un momento para que las cookies se establezcan
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Esperar un momento para que las cookies se establezcan y el middleware las procese
+      await new Promise(resolve => setTimeout(resolve, 300))
       
+      // Verificar que la sesión se haya guardado correctamente
+      const { data: { user: verifyUser } } = await supabase.auth.getUser()
+      
+      if (verifyUser) {
+        toast({
+          title: "Éxito",
+          description: "Sesión iniciada correctamente",
+        })
+        
+        // Usar window.location para forzar una recarga completa y asegurar que las cookies se establezcan
+        window.location.href = "/dashboard"
+      } else {
+        toast({
+          title: "Error",
+          description: "No se pudo establecer la sesión. Intenta nuevamente.",
+          variant: "destructive",
+        })
+        setLoading(false)
+      }
+    } else {
       toast({
-        title: "Éxito",
-        description: "Sesión iniciada correctamente",
+        title: "Error",
+        description: "No se recibió una sesión válida",
+        variant: "destructive",
       })
-      
-      router.push("/dashboard")
-      router.refresh()
+      setLoading(false)
     }
 
     setLoading(false)

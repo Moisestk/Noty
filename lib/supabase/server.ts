@@ -14,11 +14,14 @@ export async function createClient() {
         },
         set(name: string, value: string, options: CookieOptions) {
           try {
+            // Detectar cookies de autenticación de Supabase (pueden tener diferentes formatos)
+            const isAuthCookie = name.includes('sb-') || name.includes('auth-token') || name.includes('supabase-auth')
+            
             // Configurar opciones de persistencia para cookies de autenticación
             const cookieOptions: CookieOptions = {
               ...options,
               // Persistir cookies de autenticación por 30 días
-              maxAge: name.includes('sb-') && name.includes('auth-token')
+              maxAge: isAuthCookie
                 ? 60 * 60 * 24 * 30
                 : (options.maxAge || 60 * 60 * 24 * 7),
               sameSite: (options.sameSite || 'lax') as 'lax' | 'strict' | 'none',
