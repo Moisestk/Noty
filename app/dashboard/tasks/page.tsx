@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
-import { Search, Calendar, CheckCircle2, Circle, Plus, Grid3x3, List, ListChecks, MoreVertical, Edit, Trash2 } from "lucide-react"
+import { Search, Calendar, Plus, Grid3x3, List, ListChecks, MoreVertical, Edit, Trash2 } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 
@@ -353,16 +353,9 @@ export default function TasksPage() {
                   </div>
                   <Link href={`/dashboard/tasks/${task.id}`}>
                     <CardHeader className={viewMode === "compact" ? "p-0" : viewMode === "cards" ? "p-4" : ""}>
-                      <div className="flex items-start justify-between gap-2">
-                        <CardTitle className={`flex-1 ${viewMode === "compact" ? "text-base line-clamp-1" : "line-clamp-2"}`}>
-                          {task.title}
-                        </CardTitle>
-                        {task.completed ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
-                        ) : (
-                          <Circle className="h-5 w-5 text-muted-foreground shrink-0" />
-                        )}
-                      </div>
+                      <CardTitle className={`${viewMode === "compact" ? "text-base line-clamp-1" : "line-clamp-2"}`}>
+                        {task.title}
+                      </CardTitle>
                       {task.description && viewMode !== "compact" && viewMode !== "cards" && (
                         <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
                           {task.description}
