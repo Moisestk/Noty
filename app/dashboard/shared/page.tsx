@@ -7,8 +7,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, Grid3x3, List, ListChecks, Share2, Search } from "lucide-react"
+import { Plus, Grid3x3, List, ListChecks, Share2, Search, MoreVertical, Edit, Trash2 } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
@@ -37,7 +43,9 @@ export default function SharedNotesPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("cards")
   const [searchQuery, setSearchQuery] = useState("")
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null)
+  const [noteToDelete, setNoteToDelete] = useState<string | null>(null)
   const [shareEmail, setShareEmail] = useState("")
   const router = useRouter()
   const supabase = createClient()
@@ -144,6 +152,38 @@ export default function SharedNotesPage() {
       note.title.toLowerCase().includes(searchQuery.toLowerCase())
     )
     setFilteredNotes(filtered)
+  }
+
+  const handleEditNote = (note: Note) => {
+    router.push(`/dashboard/notes/${note.id}/edit`)
+  }
+
+  const handleDeleteNote = (noteId: string) => {
+    setNoteToDelete(noteId)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDeleteNote = async () => {
+    if (!noteToDelete) return
+
+    const { error } = await supabase.from("notes").delete().eq("id", noteToDelete)
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la nota",
+        variant: "destructive",
+      })
+    } else {
+      toast({
+        title: "Éxito",
+        description: "Nota eliminada",
+      })
+      loadSharedNotes()
+    }
+
+    setIsDeleteDialogOpen(false)
+    setNoteToDelete(null)
   }
 
   const handleShareNote = async () => {
@@ -279,7 +319,7 @@ export default function SharedNotesPage() {
         <div
           className={
             viewMode === "cards"
-              ? "grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+              ? "grid gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-3"
               : "space-y-2"
           }
         >
@@ -291,13 +331,62 @@ export default function SharedNotesPage() {
               transition={{ duration: 0.2 }}
             >
               <Card
-                className={`cursor-pointer transition-shadow hover:shadow-lg ${
+                className={`cursor-pointer transition-shadow hover:shadow-lg relative ${
                   viewMode === "compact" ? "p-3" : ""
-                }`}
+                } ${viewMode === "cards" ? "aspect-square" : ""}`}
               >
+                {/* Menú de 3 puntos */}
+                <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                        }}
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleEditNote(note)
+                        }}
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedNoteId(note.id)
+                          setIsShareDialogOpen(true)
+                        }}
+                      >
+                        <Share2 className="mr-2 h-4 w-4" />
+                        Compartir
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteNote(note.id)
+                        }}
+                        className="text-destructive"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Eliminar
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
                 <Link href={`/dashboard/notes/${note.id}`}>
                   {note.cover_image_url && viewMode === "cards" && (
-                    <div className="relative h-48 w-full overflow-hidden rounded-t-2xl">
+                    <div className="relative h-full w-full overflow-hidden rounded-t-2xl">
                       <Image
                         src={note.cover_image_url}
                         alt={note.title}
@@ -306,34 +395,24 @@ export default function SharedNotesPage() {
                       />
                     </div>
                   )}
-                  <CardHeader className={viewMode === "compact" ? "p-0" : ""}>
-                    <CardTitle className={viewMode === "compact" ? "text-base" : ""}>
+                  <CardHeader className={viewMode === "compact" ? "p-0" : viewMode === "cards" ? "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/95 to-transparent p-4" : ""}>
+                    <CardTitle className={`${viewMode === "compact" ? "text-base" : ""} ${viewMode === "cards" ? "text-white drop-shadow-lg" : ""} line-clamp-2`}>
                       {note.title}
                     </CardTitle>
-                    {viewMode !== "compact" && (
+                    {viewMode !== "compact" && viewMode !== "cards" && (
                       <CardDescription className="line-clamp-2">
                         {note.content || "Sin contenido"}
                       </CardDescription>
                     )}
                   </CardHeader>
                 </Link>
-                <CardContent className={viewMode === "compact" ? "p-0" : ""}>
+                <CardContent className={viewMode === "compact" ? "p-0" : viewMode === "cards" ? "hidden" : ""}>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">
                       {(note as any).isSharedWithMe
                         ? "Compartida contigo"
                         : "Compartida por ti"}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedNoteId(note.id)
-                        setIsShareDialogOpen(true)
-                      }}
-                    >
-                      <Share2 className="h-4 w-4" />
-                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -367,6 +446,35 @@ export default function SharedNotesPage() {
               Cancelar
             </Button>
             <Button onClick={handleShareNote}>Compartir</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de confirmación para eliminar nota */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>¿Eliminar nota?</DialogTitle>
+            <DialogDescription>
+              Esta acción no se puede deshacer. La nota será eliminada permanentemente.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDeleteDialogOpen(false)
+                setNoteToDelete(null)
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteNote}
+            >
+              Eliminar
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

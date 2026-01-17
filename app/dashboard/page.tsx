@@ -8,7 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Plus, Grid3x3, List, ListChecks, Search } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Plus, Grid3x3, List, ListChecks, Search, MoreVertical, Edit, Trash2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import Image from "next/image"
@@ -228,7 +234,7 @@ export default function DashboardPage() {
         <div
           className={
             viewMode === "cards"
-              ? "grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+              ? "grid gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-3"
               : "space-y-2"
           }
         >
@@ -240,13 +246,52 @@ export default function DashboardPage() {
               transition={{ duration: 0.2 }}
             >
               <Card
-                className={`cursor-pointer transition-shadow hover:shadow-lg ${
+                className={`cursor-pointer transition-shadow hover:shadow-lg relative ${
                   viewMode === "compact" ? "p-3" : ""
-                }`}
+                } ${viewMode === "cards" ? "aspect-square" : ""}`}
               >
+                {/* Menú de 3 puntos */}
+                <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                        }}
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleEditNote(note)
+                        }}
+                      >
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteNote(note.id)
+                        }}
+                        className="text-destructive"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Eliminar
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
                 <Link href={`/dashboard/notes/${note.id}`}>
                   {note.cover_image_url && viewMode === "cards" && (
-                    <div className="relative h-48 w-full overflow-hidden rounded-t-2xl">
+                    <div className="relative h-full w-full overflow-hidden rounded-t-2xl">
                       <Image
                         src={note.cover_image_url}
                         alt={note.title}
@@ -255,35 +300,17 @@ export default function DashboardPage() {
                       />
                     </div>
                   )}
-                  <CardHeader className={viewMode === "compact" ? "p-0" : ""}>
-                    <CardTitle className={viewMode === "compact" ? "text-base" : ""}>
+                  <CardHeader className={viewMode === "compact" ? "p-0" : viewMode === "cards" ? "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/95 to-transparent p-4" : ""}>
+                    <CardTitle className={`${viewMode === "compact" ? "text-base" : ""} ${viewMode === "cards" ? "text-white drop-shadow-lg" : ""} line-clamp-2`}>
                       {note.title}
                     </CardTitle>
-                    {viewMode !== "compact" && (
+                    {viewMode !== "compact" && viewMode !== "cards" && (
                       <CardDescription className="line-clamp-2">
                         {note.content || "Sin contenido"}
                       </CardDescription>
                     )}
                   </CardHeader>
                 </Link>
-                <CardContent className={viewMode === "compact" ? "p-0" : ""}>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditNote(note)}
-                    >
-                      Editar
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteNote(note.id)}
-                    >
-                      Eliminar
-                    </Button>
-                  </div>
-                </CardContent>
               </Card>
             </motion.div>
           ))}

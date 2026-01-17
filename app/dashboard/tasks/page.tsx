@@ -7,8 +7,15 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
-import { Search, Calendar, CheckCircle2, Circle, Plus, Grid3x3, List, ListChecks } from "lucide-react"
+import { Search, Calendar, CheckCircle2, Circle, Plus, Grid3x3, List, ListChecks, MoreVertical, Edit, Trash2 } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 
@@ -39,6 +46,8 @@ export default function TasksPage() {
   const [dateFilter, setDateFilter] = useState<DateFilter>("all")
   const [viewMode, setViewMode] = useState<ViewMode>("cards")
   const [loading, setLoading] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null)
   const router = useRouter()
   const supabase = createClient()
   const { toast } = useToast()
@@ -148,6 +157,38 @@ export default function TasksPage() {
     return Math.round(totalProgress / filteredTasks.length)
   }
 
+  const handleEditTask = (task: UserTask) => {
+    router.push(`/dashboard/tasks/${task.id}`)
+  }
+
+  const handleDeleteTask = (taskId: string) => {
+    setTaskToDelete(taskId)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDeleteTask = async () => {
+    if (!taskToDelete) return
+
+    const { error } = await supabase.from("user_tasks").delete().eq("id", taskToDelete)
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la tarea",
+        variant: "destructive",
+      })
+    } else {
+      toast({
+        title: "Éxito",
+        description: "Tarea eliminada",
+      })
+      loadTasks()
+    }
+
+    setIsDeleteDialogOpen(false)
+    setTaskToDelete(null)
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -250,7 +291,7 @@ export default function TasksPage() {
         <div
           className={
             viewMode === "cards"
-              ? "grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+              ? "grid gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-3"
               : "space-y-2"
           }
         >
@@ -266,30 +307,69 @@ export default function TasksPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2 }}
               >
-                <Link href={`/dashboard/tasks/${task.id}`}>
-                  <Card
-                    className={`cursor-pointer transition-shadow hover:shadow-lg ${
-                      viewMode === "compact" ? "p-3" : "h-full"
-                    }`}
-                  >
-                    <CardHeader className={viewMode === "compact" ? "p-0" : ""}>
+                <Card
+                  className={`cursor-pointer transition-shadow hover:shadow-lg relative ${
+                    viewMode === "compact" ? "p-3" : viewMode === "cards" ? "aspect-square h-full" : "h-full"
+                  }`}
+                >
+                  {/* Menú de 3 puntos */}
+                  <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                          }}
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleEditTask(task)
+                          }}
+                        >
+                          <Edit className="mr-2 h-4 w-4" />
+                          Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDeleteTask(task.id)
+                          }}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Eliminar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <Link href={`/dashboard/tasks/${task.id}`}>
+                    <CardHeader className={viewMode === "compact" ? "p-0" : viewMode === "cards" ? "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/95 to-transparent p-4" : ""}>
                       <div className="flex items-start justify-between gap-2">
-                        <CardTitle className={`flex-1 ${viewMode === "compact" ? "text-base line-clamp-1" : "line-clamp-2"}`}>
+                        <CardTitle className={`flex-1 ${viewMode === "compact" ? "text-base line-clamp-1" : viewMode === "cards" ? "text-white drop-shadow-lg line-clamp-2" : "line-clamp-2"}`}>
                           {task.title}
                         </CardTitle>
                         {task.completed ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
+                          <CheckCircle2 className={`shrink-0 ${viewMode === "cards" ? "h-5 w-5 text-green-300" : "h-5 w-5 text-green-500"}`} />
                         ) : (
-                          <Circle className="h-5 w-5 text-muted-foreground shrink-0" />
+                          <Circle className={`shrink-0 ${viewMode === "cards" ? "h-5 w-5 text-white/70" : "h-5 w-5 text-muted-foreground"}`} />
                         )}
                       </div>
-                      {task.description && viewMode !== "compact" && (
+                      {task.description && viewMode !== "compact" && viewMode !== "cards" && (
                         <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
                           {task.description}
                         </p>
                       )}
                     </CardHeader>
-                    <CardContent className={viewMode === "compact" ? "p-0 mt-1" : ""}>
+                    <CardContent className={viewMode === "compact" ? "p-0 mt-1" : viewMode === "cards" ? "hidden" : ""}>
                       {checklistCount > 0 ? (
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-sm">
@@ -315,13 +395,42 @@ export default function TasksPage() {
                         </p>
                       )}
                     </CardContent>
-                  </Card>
-                </Link>
+                  </Link>
+                </Card>
               </motion.div>
             )
           })}
         </div>
       )}
+
+      {/* Modal de confirmación para eliminar tarea */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>¿Eliminar tarea?</DialogTitle>
+            <DialogDescription>
+              Esta acción no se puede deshacer. La tarea será eliminada permanentemente.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDeleteDialogOpen(false)
+                setTaskToDelete(null)
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteTask}
+            >
+              Eliminar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
