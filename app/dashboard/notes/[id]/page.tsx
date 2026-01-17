@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from "@/hooks/use-toast"
 import { ArrowLeft, Share2, Image as ImageIcon, Trash2, Edit, Check, Info } from "lucide-react"
 import Image from "next/image"
+import { LoadingSpinner } from "@/components/loading-spinner"
 
 interface Note {
   id: string
