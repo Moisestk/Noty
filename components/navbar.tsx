@@ -88,7 +88,7 @@ export function Navbar() {
             onClick={() => router.push("/dashboard")}
             title="Volver al dashboard"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" strokeWidth={2.5} />
           </Button>
         )}
         <div className="flex items-center space-x-4 ml-auto">
