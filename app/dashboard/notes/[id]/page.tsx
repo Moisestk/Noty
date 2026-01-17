@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { motion } from "framer-motion"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
-import { ArrowLeft, Share2, Image as ImageIcon, Trash2, Edit, Check } from "lucide-react"
+import { ArrowLeft, Share2, Image as ImageIcon, Trash2, Edit, Check, Info } from "lucide-react"
 import Image from "next/image"
 
 interface Note {
@@ -43,6 +43,7 @@ export default function NoteDetailPage() {
   const [images, setImages] = useState<NoteImage[]>([])
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([])
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
   const [shareEmail, setShareEmail] = useState("")
   const supabase = createClient()
   const { toast } = useToast()
@@ -253,7 +254,7 @@ export default function NoteDetailPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Barra superior */}
-      <div className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between px-2 sm:px-4">
           <Button variant="ghost" size="icon" onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4" />
@@ -276,6 +277,15 @@ export default function NoteDetailPage() {
             >
               <Share2 className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">Compartir</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setIsDetailsDialogOpen(true)}
+              className="gap-1 sm:gap-2 text-xs sm:text-sm"
+            >
+              <Info className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Detalles</span>
             </Button>
             <Label htmlFor="image-upload" className="cursor-pointer">
               <Button variant="outline" size="sm" asChild className="gap-1 sm:gap-2 text-xs sm:text-sm">
@@ -415,6 +425,55 @@ export default function NoteDetailPage() {
               Cancelar
             </Button>
             <Button onClick={handleShareNote}>Compartir</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal de detalles */}
+      <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Detalles de la nota</DialogTitle>
+            <DialogDescription>
+              Información sobre esta nota
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {note && (
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Fecha de creación</p>
+                  <p className="text-base">
+                    {new Date(note.created_at).toLocaleDateString('es-ES', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+                {note.updated_at && note.updated_at !== note.created_at && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Última actualización</p>
+                    <p className="text-base">
+                      {new Date(note.updated_at).toLocaleDateString('es-ES', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDetailsDialogOpen(false)}>
+              Cerrar
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
