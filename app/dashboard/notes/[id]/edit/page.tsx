@@ -151,11 +151,7 @@ export default function EditNotePage() {
   }
 
   if (!note) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-muted-foreground">Cargando...</p>
-      </div>
-    )
+    return <LoadingSpinner />
   }
 
   return (
