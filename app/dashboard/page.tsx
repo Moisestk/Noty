@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Plus, Grid3x3, List, ListChecks, Search, MoreVertical, Edit, Trash2 } from "lucide-react"
+import { Plus, Grid3x3, List, ListChecks, Search, MoreVertical, Edit, Trash2, Calendar } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import Image from "next/image"
@@ -22,6 +22,7 @@ import { motion } from "framer-motion"
 import { useSearch } from "@/contexts/search-context"
 
 type ViewMode = "cards" | "list" | "compact"
+type DateFilter = "all" | "today" | "week" | "month" | "year"
 
 interface Note {
   id: string
@@ -36,6 +37,7 @@ export default function DashboardPage() {
   const [notes, setNotes] = useState<Note[]>([])
   const [filteredNotes, setFilteredNotes] = useState<Note[]>([])
   const [viewMode, setViewMode] = useState<ViewMode>("cards")
+  const [dateFilter, setDateFilter] = useState<DateFilter>("all")
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null)
   const { searchQuery, setSearchQuery } = useSearch()
@@ -49,7 +51,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     filterNotes()
-  }, [searchQuery, notes])
+  }, [searchQuery, dateFilter, notes])
 
   const loadNotes = async () => {
     try {
@@ -111,14 +113,45 @@ export default function DashboardPage() {
   }
 
   const filterNotes = () => {
-    if (!searchQuery.trim()) {
-      setFilteredNotes(notes)
-      return
+    let filtered = [...notes]
+
+    // Filtrar por búsqueda
+    if (searchQuery.trim()) {
+      filtered = filtered.filter((note) =>
+        note.title.toLowerCase().includes(searchQuery.toLowerCase())
+      )
     }
 
-    const filtered = notes.filter((note) =>
-      note.title.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    // Filtrar por fecha
+    if (dateFilter !== "all") {
+      const now = new Date()
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      
+      filtered = filtered.filter((note) => {
+        const noteDate = new Date(note.created_at)
+        const noteDateOnly = new Date(noteDate.getFullYear(), noteDate.getMonth(), noteDate.getDate())
+        
+        switch (dateFilter) {
+          case "today":
+            return noteDateOnly.getTime() === today.getTime()
+          case "week":
+            const weekAgo = new Date(today)
+            weekAgo.setDate(weekAgo.getDate() - 7)
+            return noteDateOnly >= weekAgo
+          case "month":
+            const monthAgo = new Date(today)
+            monthAgo.setMonth(monthAgo.getMonth() - 1)
+            return noteDateOnly >= monthAgo
+          case "year":
+            const yearAgo = new Date(today)
+            yearAgo.setFullYear(yearAgo.getFullYear() - 1)
+            return noteDateOnly >= yearAgo
+          default:
+            return true
+        }
+      })
+    }
+
     setFilteredNotes(filtered)
   }
 
@@ -175,7 +208,8 @@ export default function DashboardPage() {
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
             placeholder="Buscar notas..."
@@ -189,38 +223,55 @@ export default function DashboardPage() {
             className="pl-10"
           />
         </div>
-        <Select value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)}>
-          <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="cards">
-              <div className="flex items-center">
-                <Grid3x3 className="mr-2 h-4 w-4" />
-                Tarjetas Grandes
-              </div>
-            </SelectItem>
-            <SelectItem value="list">
-              <div className="flex items-center">
-                <List className="mr-2 h-4 w-4" />
-                Lista
-              </div>
-            </SelectItem>
-            <SelectItem value="compact">
-              <div className="flex items-center">
-                <ListChecks className="mr-2 h-4 w-4" />
-                Lista Compacta
-              </div>
-            </SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select value={dateFilter} onValueChange={(value: any) => setDateFilter(value)}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <Calendar className="mr-2 h-4 w-4" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las fechas</SelectItem>
+              <SelectItem value="today">Hoy</SelectItem>
+              <SelectItem value="week">Última semana</SelectItem>
+              <SelectItem value="month">Último mes</SelectItem>
+              <SelectItem value="year">Último año</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={viewMode} onValueChange={(value) => setViewMode(value as ViewMode)}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="cards">
+                <div className="flex items-center">
+                  <Grid3x3 className="mr-2 h-4 w-4" />
+                  Tarjetas Grandes
+                </div>
+              </SelectItem>
+              <SelectItem value="list">
+                <div className="flex items-center">
+                  <List className="mr-2 h-4 w-4" />
+                  Lista
+                </div>
+              </SelectItem>
+              <SelectItem value="compact">
+                <div className="flex items-center">
+                  <ListChecks className="mr-2 h-4 w-4" />
+                  Lista Compacta
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {filteredNotes.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <p className="text-muted-foreground">
-              {searchQuery ? "No se encontraron notas" : "No tienes notas aún"}
+              {searchQuery || dateFilter !== "all"
+                ? "No se encontraron notas"
+                : "No tienes notas aún"}
             </p>
             {!searchQuery && (
               <Button onClick={handleCreateNote} className="mt-4">
