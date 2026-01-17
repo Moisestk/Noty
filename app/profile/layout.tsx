@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Navbar } from "@/components/navbar"
+import { LoadingSpinner } from "@/components/loading-spinner"
 
 export default function ProfileLayout({
   children,
@@ -31,11 +32,7 @@ export default function ProfileLayout({
   }, [supabase, router])
 
   if (!user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-muted-foreground">Cargando...</p>
-      </div>
-    )
+    return <LoadingSpinner />
   }
 
   return (

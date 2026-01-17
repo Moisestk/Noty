@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { ArrowLeft, Image as ImageIcon, X, Save } from "lucide-react"
 import Image from "next/image"
+import { LoadingSpinner } from "@/components/loading-spinner"
 import { motion } from "framer-motion"
 
 interface Note {

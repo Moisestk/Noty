@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Navbar } from "@/components/navbar"
 import { Sidebar } from "@/components/sidebar"
+import { LoadingSpinner } from "@/components/loading-spinner"
 
 export default function DashboardLayout({
   children,
@@ -107,11 +108,7 @@ export default function DashboardLayout({
   }, [supabase, router])
 
   if (isLoading || !user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-muted-foreground">Cargando...</p>
-      </div>
-    )
+    return <LoadingSpinner />
   }
 
   // Si estamos en una página de edición, mostrar solo el contenido sin sidebar ni navbar

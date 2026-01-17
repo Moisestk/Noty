@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ArrowLeft, Plus, Check, X, Save, Trash2, MoreVertical, Edit } from "lucide-react"
 import { motion } from "framer-motion"
+import { LoadingSpinner } from "@/components/loading-spinner"
 
 interface ChecklistItem {
   id: string
@@ -207,11 +208,7 @@ export default function TaskDetailPage() {
   }
 
   if (!task) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground">Cargando...</p>
-      </div>
-    )
+    return <LoadingSpinner />
   }
 
   const completedItems = checklistItems.filter((item) => item.completed).length

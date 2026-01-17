@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
 import { User, Upload } from "lucide-react"
 import Image from "next/image"
+import { LoadingSpinner } from "@/components/loading-spinner"
 
 export default function ProfilePage() {
   const [user, setUser] = useState<any>(null)
