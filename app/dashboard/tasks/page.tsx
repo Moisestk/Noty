@@ -352,15 +352,15 @@ export default function TasksPage() {
                     </DropdownMenu>
                   </div>
                   <Link href={`/dashboard/tasks/${task.id}`}>
-                    <CardHeader className={viewMode === "compact" ? "p-0" : viewMode === "cards" ? "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/95 to-transparent p-4" : ""}>
+                    <CardHeader className={viewMode === "compact" ? "p-0" : viewMode === "cards" ? "p-4" : ""}>
                       <div className="flex items-start justify-between gap-2">
-                        <CardTitle className={`flex-1 ${viewMode === "compact" ? "text-base line-clamp-1" : viewMode === "cards" ? "text-white drop-shadow-lg line-clamp-2" : "line-clamp-2"}`}>
+                        <CardTitle className={`flex-1 ${viewMode === "compact" ? "text-base line-clamp-1" : "line-clamp-2"}`}>
                           {task.title}
                         </CardTitle>
                         {task.completed ? (
-                          <CheckCircle2 className={`shrink-0 ${viewMode === "cards" ? "h-5 w-5 text-green-300" : "h-5 w-5 text-green-500"}`} />
+                          <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />
                         ) : (
-                          <Circle className={`shrink-0 ${viewMode === "cards" ? "h-5 w-5 text-white/70" : "h-5 w-5 text-muted-foreground"}`} />
+                          <Circle className="h-5 w-5 text-muted-foreground shrink-0" />
                         )}
                       </div>
                       {task.description && viewMode !== "compact" && viewMode !== "cards" && (

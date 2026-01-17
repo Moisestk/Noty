@@ -300,8 +300,8 @@ export default function DashboardPage() {
                       />
                     </div>
                   )}
-                  <CardHeader className={viewMode === "compact" ? "p-0" : viewMode === "cards" ? "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/95 to-transparent p-4" : ""}>
-                    <CardTitle className={`${viewMode === "compact" ? "text-base" : ""} ${viewMode === "cards" ? "text-white drop-shadow-lg" : ""} line-clamp-2`}>
+                  <CardHeader className={viewMode === "compact" ? "p-0" : viewMode === "cards" && note.cover_image_url ? "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/95 to-transparent p-4" : viewMode === "cards" ? "p-4" : ""}>
+                    <CardTitle className={`${viewMode === "compact" ? "text-base" : ""} ${viewMode === "cards" && note.cover_image_url ? "text-white drop-shadow-lg" : ""} line-clamp-2`}>
                       {note.title}
                     </CardTitle>
                     {viewMode !== "compact" && viewMode !== "cards" && (
