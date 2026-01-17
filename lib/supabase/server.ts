@@ -14,7 +14,18 @@ export async function createClient() {
         },
         set(name: string, value: string, options: CookieOptions) {
           try {
-            cookieStore.set({ name, value, ...options })
+            // Configurar opciones de persistencia para cookies de autenticación
+            const cookieOptions: CookieOptions = {
+              ...options,
+              // Persistir cookies de autenticación por 30 días
+              maxAge: name.includes('sb-') && name.includes('auth-token')
+                ? 60 * 60 * 24 * 30
+                : (options.maxAge || 60 * 60 * 24 * 7),
+              sameSite: (options.sameSite || 'lax') as 'lax' | 'strict' | 'none',
+              secure: options.secure ?? (process.env.NODE_ENV === 'production'),
+              path: options.path || '/',
+            }
+            cookieStore.set({ name, value, ...cookieOptions })
           } catch (error) {
             // The `set` method was called from a Server Component.
             // This can be ignored if you have middleware refreshing

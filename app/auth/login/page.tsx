@@ -27,7 +27,7 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
@@ -38,7 +38,20 @@ export default function LoginPage() {
         description: error.message,
         variant: "destructive",
       })
-    } else {
+      setLoading(false)
+      return
+    }
+
+    if (data.session) {
+      // Asegurar que la sesión se guarde correctamente
+      // Esperar un momento para que las cookies se establezcan
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      toast({
+        title: "Éxito",
+        description: "Sesión iniciada correctamente",
+      })
+      
       router.push("/dashboard")
       router.refresh()
     }

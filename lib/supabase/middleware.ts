@@ -15,10 +15,25 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.get(name)?.value
         },
         set(name: string, value: string, options: CookieOptions) {
+          // Configurar opciones de persistencia para las cookies de autenticación de Supabase
+          const cookieOptions: CookieOptions = {
+            ...options,
+            // Persistir cookies de autenticación por 30 días (en segundos)
+            maxAge: name.includes('sb-') && name.includes('auth-token') 
+              ? 60 * 60 * 24 * 30 
+              : (options.maxAge || 60 * 60 * 24 * 7), // 7 días por defecto para otras cookies
+            // Configurar sameSite para permitir cookies en navegadores modernos
+            sameSite: (options.sameSite || 'lax') as 'lax' | 'strict' | 'none',
+            // Secure solo en producción (HTTPS)
+            secure: options.secure ?? (process.env.NODE_ENV === 'production'),
+            // Path raíz para que esté disponible en toda la app
+            path: options.path || '/',
+          }
+          
           request.cookies.set({
             name,
             value,
-            ...options,
+            ...cookieOptions,
           })
           supabaseResponse = NextResponse.next({
             request,
@@ -26,7 +41,7 @@ export async function updateSession(request: NextRequest) {
           supabaseResponse.cookies.set({
             name,
             value,
-            ...options,
+            ...cookieOptions,
           })
         },
         remove(name: string, options: CookieOptions) {

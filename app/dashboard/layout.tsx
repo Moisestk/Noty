@@ -37,6 +37,22 @@ export default function DashboardLayout({
     }
 
     checkUser()
+
+    // Escuchar cambios en el estado de autenticación
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        setUser(null)
+        router.push("/auth/login")
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        setUser(session.user)
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
   }, [supabase, router])
 
   if (!user) {
