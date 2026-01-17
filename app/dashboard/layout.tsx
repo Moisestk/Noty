@@ -83,18 +83,18 @@ export default function DashboardLayout({
         if (session?.user) {
           setUser(session.user)
           setIsLoading(false)
-        }
-      } else if (event === 'SIGNED_IN' && !session) {
-        // Si hay un evento SIGNED_IN pero sin sesión, esperar un momento
-        setTimeout(async () => {
-          if (mounted) {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (user) {
-              setUser(user)
-              setIsLoading(false)
+        } else {
+          // Si hay un evento SIGNED_IN pero sin sesión, esperar un momento y verificar
+          setTimeout(async () => {
+            if (mounted) {
+              const { data: { user } } = await supabase.auth.getUser()
+              if (user) {
+                setUser(user)
+                setIsLoading(false)
+              }
             }
-          }
-        }, 200)
+          }, 200)
+        }
       }
     })
 
