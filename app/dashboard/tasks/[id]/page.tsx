@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ArrowLeft, Plus, Check, X, Save, Trash2, MoreVertical, Edit, Church, Home, DollarSign, Code, Book, User, Utensils, CheckSquare, GraduationCap, Tag as TagIcon } from "lucide-react"
+import { ArrowLeft, Plus, Check, X, Save, Trash2, MoreVertical, Edit, Church, Home, DollarSign, Code, Book, User, Utensils, CheckSquare, GraduationCap, Gamepad2, Tag as TagIcon } from "lucide-react"
 import { motion } from "framer-motion"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { TagSelector } from "@/components/tag-selector"
