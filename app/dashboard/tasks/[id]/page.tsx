@@ -14,10 +14,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ArrowLeft, Plus, Check, X, Save, Trash2, MoreVertical, Edit } from "lucide-react"
+import { ArrowLeft, Plus, Check, X, Save, Trash2, MoreVertical, Edit, Church, Home, DollarSign, Code, Book, User, Utensils, CheckSquare, GraduationCap, Tag as TagIcon } from "lucide-react"
 import { motion } from "framer-motion"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { TagSelector } from "@/components/tag-selector"
+import { Badge } from "@/components/ui/badge"
 
 interface ChecklistItem {
   id: string
@@ -32,6 +33,29 @@ interface Task {
   title: string
   description: string | null
   completed: boolean
+}
+
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Church,
+  Home,
+  DollarSign,
+  Code,
+  Book,
+  User,
+  Utensils,
+  CheckSquare,
+  GraduationCap,
+  Tag: TagIcon,
+}
+
+function TaskTagBadge({ tag }: { tag: { id: string; name: string; icon: string } }) {
+  const Icon = iconMap[tag.icon] || TagIcon
+  return (
+    <Badge variant="outline" className="gap-1.5 px-3 py-1.5 text-sm">
+      {Icon && <Icon className="h-4 w-4" />}
+      <span>{tag.name}</span>
+    </Badge>
+  )
 }
 
 export default function TaskDetailPage() {
@@ -49,11 +73,13 @@ export default function TaskDetailPage() {
   const [loading, setLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
+  const [taskTag, setTaskTag] = useState<{ id: string; name: string; icon: string } | null>(null)
 
   useEffect(() => {
     loadTask()
     loadChecklist()
     loadTags()
+    loadTaskTag()
   }, [taskId])
 
   const loadTask = async () => {
@@ -86,6 +112,27 @@ export default function TaskDetailPage() {
 
     if (tagsData) {
       setSelectedTagIds(tagsData.map(t => t.tag_id))
+    }
+  }
+
+  const loadTaskTag = async () => {
+    const { data: taskTagsData } = await supabase
+      .from("task_tags")
+      .select(`
+        tag_id,
+        tags (
+          id,
+          name,
+          icon
+        )
+      `)
+      .eq("task_id", taskId)
+      .limit(1)
+
+    if (taskTagsData && taskTagsData.length > 0 && taskTagsData[0].tags) {
+      setTaskTag(taskTagsData[0].tags as { id: string; name: string; icon: string })
+    } else {
+      setTaskTag(null)
     }
   }
 
@@ -151,6 +198,9 @@ export default function TaskDetailPage() {
         title: "Éxito",
         description: "Tarea actualizada exitosamente",
       })
+      
+      // Recargar la etiqueta después de guardar
+      loadTaskTag()
     } catch (error: any) {
       toast({
         title: "Error",
@@ -292,6 +342,12 @@ export default function TaskDetailPage() {
       {/* Información de la tarea */}
       <Card>
         <CardHeader>
+          {/* Etiqueta */}
+          {taskTag && (
+            <div className="mb-3">
+              <TaskTagBadge tag={taskTag} />
+            </div>
+          )}
           <Input
             placeholder="Título de la tarea..."
             value={title}

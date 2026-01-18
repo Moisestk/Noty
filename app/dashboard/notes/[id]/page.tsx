@@ -9,9 +9,10 @@ import { Label } from "@/components/ui/label"
 import { motion } from "framer-motion"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
-import { ArrowLeft, Share2, Image as ImageIcon, Trash2, Edit, Check, Info } from "lucide-react"
+import { ArrowLeft, Share2, Image as ImageIcon, Trash2, Edit, Check, Info, Church, Home, DollarSign, Code, Book, User, Utensils, CheckSquare, GraduationCap, Tag as TagIcon } from "lucide-react"
 import Image from "next/image"
 import { LoadingSpinner } from "@/components/loading-spinner"
+import { Badge } from "@/components/ui/badge"
 
 interface Note {
   id: string
@@ -36,6 +37,29 @@ interface ChecklistItem {
   order_index: number
 }
 
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Church,
+  Home,
+  DollarSign,
+  Code,
+  Book,
+  User,
+  Utensils,
+  CheckSquare,
+  GraduationCap,
+  Tag: TagIcon,
+}
+
+function NoteTagBadge({ tag }: { tag: { id: string; name: string; icon: string } }) {
+  const Icon = iconMap[tag.icon] || TagIcon
+  return (
+    <Badge variant="outline" className="gap-1.5 px-3 py-1.5 text-sm">
+      {Icon && <Icon className="h-4 w-4" />}
+      <span>{tag.name}</span>
+    </Badge>
+  )
+}
+
 export default function NoteDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -46,6 +70,7 @@ export default function NoteDetailPage() {
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
   const [shareEmail, setShareEmail] = useState("")
+  const [noteTag, setNoteTag] = useState<{ id: string; name: string; icon: string } | null>(null)
   const supabase = createClient()
   const { toast } = useToast()
 
@@ -53,6 +78,7 @@ export default function NoteDetailPage() {
     loadNote()
     loadImages()
     loadChecklist()
+    loadNoteTag()
   }, [noteId])
 
   const loadChecklist = async () => {
@@ -87,6 +113,26 @@ export default function NoteDetailPage() {
     setNote(data)
   }
 
+  const loadNoteTag = async () => {
+    const { data: noteTagsData } = await supabase
+      .from("note_tags")
+      .select(`
+        tag_id,
+        tags (
+          id,
+          name,
+          icon
+        )
+      `)
+      .eq("note_id", noteId)
+      .limit(1)
+
+    if (noteTagsData && noteTagsData.length > 0 && noteTagsData[0].tags) {
+      setNoteTag(noteTagsData[0].tags as { id: string; name: string; icon: string })
+    } else {
+      setNoteTag(null)
+    }
+  }
 
   const loadImages = async () => {
     const { data } = await supabase
@@ -314,6 +360,13 @@ export default function NoteDetailPage() {
               fill
               className="object-cover"
             />
+          </div>
+        )}
+
+        {/* Etiqueta */}
+        {noteTag && (
+          <div className="mb-4">
+            <NoteTagBadge tag={noteTag} />
           </div>
         )}
 
