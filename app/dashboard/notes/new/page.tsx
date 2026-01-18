@@ -23,6 +23,7 @@ export default function NewNotePage() {
   const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Ajustar altura del textarea automáticamente
   useEffect(() => {
