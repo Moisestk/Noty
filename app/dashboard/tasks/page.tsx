@@ -57,11 +57,12 @@ export default function TasksPage() {
 
   useEffect(() => {
     loadTasks()
+    loadTags()
   }, [])
 
   useEffect(() => {
     filterTasks()
-  }, [searchQuery, dateFilter, tasks])
+  }, [searchQuery, dateFilter, tagFilter, tasks])
 
   const loadTasks = async () => {
     const {
@@ -75,7 +76,7 @@ export default function TasksPage() {
 
     setLoading(true)
     try {
-      // Cargar tareas con sus checklist items y etiquetas
+      // Cargar tareas con sus checklist items
       const { data: tasksData, error: tasksError } = await supabase
         .from("user_tasks")
         .select(`
@@ -83,14 +84,6 @@ export default function TasksPage() {
           checklist_items:task_checklist_items (
             id,
             completed
-          ),
-          task_tags (
-            tag_id,
-            tag:tags (
-              id,
-              name,
-              icon
-            )
           )
         `)
         .eq("user_id", user.id)
@@ -98,7 +91,47 @@ export default function TasksPage() {
 
       if (tasksError) throw tasksError
 
-      setTasks((tasksData || []) as UserTask[])
+      // Cargar etiquetas para todas las tareas
+      if (tasksData && tasksData.length > 0) {
+        const taskIds = tasksData.map(task => task.id)
+        const { data: taskTagsData } = await supabase
+          .from("task_tags")
+          .select(`
+            task_id,
+            tag_id,
+            tags (
+              id,
+              name,
+              icon
+            )
+          `)
+          .in("task_id", taskIds)
+
+        // Crear un mapa de task_id -> tags
+        const tagsMap = new Map<string, Array<{ tag_id: string; tag: { id: string; name: string; icon: string } }>>()
+        
+        if (taskTagsData) {
+          taskTagsData.forEach((tt: any) => {
+            if (!tagsMap.has(tt.task_id)) {
+              tagsMap.set(tt.task_id, [])
+            }
+            tagsMap.get(tt.task_id)!.push({
+              tag_id: tt.tag_id,
+              tag: tt.tags
+            })
+          })
+        }
+
+        // Agregar las etiquetas a cada tarea
+        const tasksWithTags = tasksData.map(task => ({
+          ...task,
+          task_tags: tagsMap.get(task.id) || []
+        }))
+
+        setTasks(tasksWithTags as UserTask[])
+      } else {
+        setTasks((tasksData || []) as UserTask[])
+      }
     } catch (error: any) {
       toast({
         title: "Error",
@@ -235,7 +268,21 @@ export default function TasksPage() {
             className="pl-10"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Select value={tagFilter} onValueChange={(value) => setTagFilter(value)}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <Tag className="mr-2 h-4 w-4" />
+              <SelectValue placeholder="Todas las etiquetas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las etiquetas</SelectItem>
+              {availableTags.map((tag) => (
+                <SelectItem key={tag.id} value={tag.id}>
+                  {tag.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={dateFilter} onValueChange={(value: any) => setDateFilter(value)}>
             <SelectTrigger className="w-full sm:w-[180px]">
               <Calendar className="mr-2 h-4 w-4" />

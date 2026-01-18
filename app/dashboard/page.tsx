@@ -69,20 +69,10 @@ export default function DashboardPage() {
         return
       }
 
-      // Cargar todas las notas del usuario con sus etiquetas
+      // Cargar todas las notas del usuario
       const { data: allNotes, error: notesError } = await supabase
         .from("notes")
-        .select(`
-          *,
-          note_tags (
-            tag_id,
-            tag:tags (
-              id,
-              name,
-              icon
-            )
-          )
-        `)
+        .select("*")
         .eq("user_id", user.id)
         .order("updated_at", { ascending: false })
 
@@ -113,7 +103,47 @@ export default function DashboardPage() {
         (note) => !sharedNoteIds.has(note.id)
       )
 
-      setNotes(ownNotes)
+      // Cargar etiquetas para todas las notas
+      if (ownNotes.length > 0) {
+        const noteIds = ownNotes.map(note => note.id)
+        const { data: noteTagsData } = await supabase
+          .from("note_tags")
+          .select(`
+            note_id,
+            tag_id,
+            tags (
+              id,
+              name,
+              icon
+            )
+          `)
+          .in("note_id", noteIds)
+
+        // Crear un mapa de note_id -> tags
+        const tagsMap = new Map<string, Array<{ tag_id: string; tag: { id: string; name: string; icon: string } }>>()
+        
+        if (noteTagsData) {
+          noteTagsData.forEach((nt: any) => {
+            if (!tagsMap.has(nt.note_id)) {
+              tagsMap.set(nt.note_id, [])
+            }
+            tagsMap.get(nt.note_id)!.push({
+              tag_id: nt.tag_id,
+              tag: nt.tags
+            })
+          })
+        }
+
+        // Agregar las etiquetas a cada nota
+        const notesWithTags = ownNotes.map(note => ({
+          ...note,
+          note_tags: tagsMap.get(note.id) || []
+        }))
+
+        setNotes(notesWithTags)
+      } else {
+        setNotes(ownNotes)
+      }
     } catch (err: any) {
       console.error("Unexpected error:", err)
       toast({
