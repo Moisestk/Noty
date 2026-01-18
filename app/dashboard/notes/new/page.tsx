@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -23,6 +23,25 @@ export default function NewNotePage() {
   const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+
+  // Ajustar altura del textarea automáticamente
+  useEffect(() => {
+    const textarea = textareaRef.current
+    if (textarea) {
+      // Resetear altura para obtener el scrollHeight correcto
+      textarea.style.height = 'auto'
+      // Ajustar altura al contenido
+      textarea.style.height = `${textarea.scrollHeight}px`
+    }
+  }, [content])
+
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setContent(e.target.value)
+    // Ajustar altura inmediatamente
+    const textarea = e.target
+    textarea.style.height = 'auto'
+    textarea.style.height = `${textarea.scrollHeight}px`
+  }
 
   const handleSaveNote = async () => {
     if (!title.trim()) {
@@ -122,7 +141,7 @@ export default function NewNotePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Barra superior */}
-      <div className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between px-4">
           <Button variant="ghost" size="icon" onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4" strokeWidth={2.5} />
@@ -212,13 +231,19 @@ export default function NewNotePage() {
         </div>
 
         {/* Contenido */}
-        <div className="min-h-[300px] sm:min-h-[500px]">
+        <div>
           <Textarea
+            ref={textareaRef}
             placeholder="Escribe algo... (o escribe '/' para comandos)"
             value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="min-h-[300px] sm:min-h-[500px] border-0 text-base sm:text-lg focus-visible:ring-0 focus-visible:ring-offset-0 resize-none p-0 break-words"
-            style={{ fontSize: '1rem', lineHeight: '1.5rem' }}
+            onChange={handleContentChange}
+            className="border-0 text-base sm:text-lg focus-visible:ring-0 focus-visible:ring-offset-0 resize-none p-0 break-words overflow-hidden"
+            style={{ 
+              fontSize: '1rem', 
+              lineHeight: '1.5rem',
+              minHeight: '200px',
+              height: 'auto'
+            }}
           />
         </div>
       </div>

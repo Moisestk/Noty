@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -38,6 +38,17 @@ export default function EditNotePage() {
   useEffect(() => {
     loadNote()
   }, [noteId])
+
+  // Ajustar altura del textarea automáticamente cuando cambia el contenido
+  useEffect(() => {
+    const textarea = textareaRef.current
+    if (textarea) {
+      // Resetear altura para obtener el scrollHeight correcto
+      textarea.style.height = 'auto'
+      // Ajustar altura al contenido
+      textarea.style.height = `${textarea.scrollHeight}px`
+    }
+  }, [content])
 
   const loadNote = async () => {
     const { data, error } = await supabase
@@ -247,13 +258,19 @@ export default function EditNotePage() {
         </div>
 
         {/* Contenido */}
-        <div className="min-h-[300px] sm:min-h-[500px]">
+        <div>
           <Textarea
+            ref={textareaRef}
             placeholder="Escribe algo... (o escribe '/' para comandos)"
             value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="min-h-[300px] sm:min-h-[500px] border-0 text-base sm:text-lg focus-visible:ring-0 focus-visible:ring-offset-0 resize-none p-0 break-words"
-            style={{ fontSize: '1rem', lineHeight: '1.5rem' }}
+            onChange={handleContentChange}
+            className="border-0 text-base sm:text-lg focus-visible:ring-0 focus-visible:ring-offset-0 resize-none p-0 break-words overflow-hidden"
+            style={{ 
+              fontSize: '1rem', 
+              lineHeight: '1.5rem',
+              minHeight: '200px',
+              height: 'auto'
+            }}
           />
         </div>
       </div>
