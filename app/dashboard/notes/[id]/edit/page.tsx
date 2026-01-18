@@ -12,6 +12,7 @@ import { ArrowLeft, Image as ImageIcon, X, Save } from "lucide-react"
 import Image from "next/image"
 import { LoadingSpinner } from "@/components/loading-spinner"
 import { motion } from "framer-motion"
+import { TagSelector } from "@/components/tag-selector"
 
 interface Note {
   id: string
@@ -34,6 +35,7 @@ export default function EditNotePage() {
   const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
@@ -72,6 +74,16 @@ export default function EditNotePage() {
     setTitle(data.title)
     setContent(data.content || "")
     setCoverImagePreview(data.cover_image_url)
+
+    // Cargar etiquetas existentes
+    const { data: tagsData } = await supabase
+      .from("note_tags")
+      .select("tag_id")
+      .eq("note_id", noteId)
+
+    if (tagsData) {
+      setSelectedTagIds(tagsData.map(t => t.tag_id))
+    }
   }
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -151,6 +163,29 @@ export default function EditNotePage() {
 
       if (error) throw error
 
+      // Actualizar etiquetas
+      // Primero eliminar todas las etiquetas existentes
+      await supabase
+        .from("note_tags")
+        .delete()
+        .eq("note_id", noteId)
+
+      // Luego insertar las nuevas etiquetas
+      if (selectedTagIds.length > 0) {
+        const tagInserts = selectedTagIds.map(tagId => ({
+          note_id: noteId,
+          tag_id: tagId,
+        }))
+        
+        const { error: tagsError } = await supabase
+          .from("note_tags")
+          .insert(tagInserts)
+
+        if (tagsError) {
+          console.error("Error updating tags:", tagsError)
+        }
+      }
+
       toast({
         title: "Éxito",
         description: "Nota actualizada exitosamente",
@@ -183,6 +218,12 @@ export default function EditNotePage() {
             <ArrowLeft className="h-4 w-4" strokeWidth={2.5} />
           </Button>
           <div className="flex items-center gap-2">
+            <TagSelector
+              selectedTagIds={selectedTagIds}
+              onTagsChange={setSelectedTagIds}
+              type="note"
+              itemId={noteId}
+            />
             <Button
               onClick={handleSaveNote}
               disabled={loading || isSaving}

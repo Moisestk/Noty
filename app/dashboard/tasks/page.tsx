@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
-import { Search, Calendar, Plus, Grid3x3, List, ListChecks, MoreVertical, Edit, Trash2 } from "lucide-react"
+import { Search, Calendar, Plus, Grid3x3, List, ListChecks, MoreVertical, Edit, Trash2, Tag } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 
@@ -44,6 +44,8 @@ export default function TasksPage() {
   const [filteredTasks, setFilteredTasks] = useState<UserTask[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [dateFilter, setDateFilter] = useState<DateFilter>("all")
+  const [tagFilter, setTagFilter] = useState<string>("all")
+  const [availableTags, setAvailableTags] = useState<Array<{ id: string; name: string; icon: string }>>([])
   const [viewMode, setViewMode] = useState<ViewMode>("cards")
   const [loading, setLoading] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -72,7 +74,7 @@ export default function TasksPage() {
 
     setLoading(true)
     try {
-      // Cargar tareas con sus checklist items
+      // Cargar tareas con sus checklist items y etiquetas
       const { data: tasksData, error: tasksError } = await supabase
         .from("user_tasks")
         .select(`
@@ -80,6 +82,14 @@ export default function TasksPage() {
           checklist_items:task_checklist_items (
             id,
             completed
+          ),
+          task_tags (
+            tag_id,
+            tag:tags (
+              id,
+              name,
+              icon
+            )
           )
         `)
         .eq("user_id", user.id)
@@ -137,6 +147,14 @@ export default function TasksPage() {
           default:
             return true
         }
+      })
+    }
+
+    // Filtrar por etiqueta
+    if (tagFilter !== "all") {
+      filtered = filtered.filter((task) => {
+        const taskTagIds = task.tags?.map(t => t.tag_id) || []
+        return taskTagIds.includes(tagFilter)
       })
     }
 
@@ -281,7 +299,7 @@ export default function TasksPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <p className="text-muted-foreground">
-              {searchQuery || dateFilter !== "all"
+              {searchQuery || dateFilter !== "all" || tagFilter !== "all"
                 ? "No se encontraron tareas"
                 : "No hay tareas. Crea una nueva tarea arriba."}
             </p>

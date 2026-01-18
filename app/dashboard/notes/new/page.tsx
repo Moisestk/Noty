@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast"
 import { ArrowLeft, Image as ImageIcon, X, Save } from "lucide-react"
 import Image from "next/image"
 import { motion } from "framer-motion"
+import { TagSelector } from "@/components/tag-selector"
 
 export default function NewNotePage() {
   const router = useRouter()
@@ -23,6 +24,7 @@ export default function NewNotePage() {
   const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Ajustar altura del textarea automáticamente
@@ -120,6 +122,23 @@ export default function NewNotePage() {
 
       if (error) throw error
 
+      // Guardar etiquetas si hay alguna seleccionada
+      if (selectedTagIds.length > 0 && data) {
+        const tagInserts = selectedTagIds.map(tagId => ({
+          note_id: data.id,
+          tag_id: tagId,
+        }))
+        
+        const { error: tagsError } = await supabase
+          .from("note_tags")
+          .insert(tagInserts)
+
+        if (tagsError) {
+          console.error("Error saving tags:", tagsError)
+          // No fallar la creación de la nota si falla guardar las etiquetas
+        }
+      }
+
       toast({
         title: "Éxito",
         description: "Nota creada exitosamente",
@@ -148,6 +167,11 @@ export default function NewNotePage() {
             <ArrowLeft className="h-4 w-4" strokeWidth={2.5} />
           </Button>
           <div className="flex items-center gap-2">
+            <TagSelector
+              selectedTagIds={selectedTagIds}
+              onTagsChange={setSelectedTagIds}
+              type="note"
+            />
             <Button
               onClick={handleSaveNote}
               disabled={loading || isSaving}

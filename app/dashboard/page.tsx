@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Plus, Grid3x3, List, ListChecks, Search, MoreVertical, Edit, Trash2, Calendar } from "lucide-react"
+import { Plus, Grid3x3, List, ListChecks, Search, MoreVertical, Edit, Trash2, Calendar, Tag } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
 import Image from "next/image"
@@ -38,6 +38,8 @@ export default function DashboardPage() {
   const [filteredNotes, setFilteredNotes] = useState<Note[]>([])
   const [viewMode, setViewMode] = useState<ViewMode>("cards")
   const [dateFilter, setDateFilter] = useState<DateFilter>("all")
+  const [tagFilter, setTagFilter] = useState<string>("all")
+  const [availableTags, setAvailableTags] = useState<Array<{ id: string; name: string; icon: string }>>([])
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null)
   const { searchQuery, setSearchQuery } = useSearch()
@@ -66,10 +68,20 @@ export default function DashboardPage() {
         return
       }
 
-      // Cargar todas las notas del usuario
+      // Cargar todas las notas del usuario con sus etiquetas
       const { data: allNotes, error: notesError } = await supabase
         .from("notes")
-        .select("*")
+        .select(`
+          *,
+          note_tags (
+            tag_id,
+            tag:tags (
+              id,
+              name,
+              icon
+            )
+          )
+        `)
         .eq("user_id", user.id)
         .order("updated_at", { ascending: false })
 
@@ -149,6 +161,14 @@ export default function DashboardPage() {
           default:
             return true
         }
+      })
+    }
+
+    // Filtrar por etiqueta
+    if (tagFilter !== "all") {
+      filtered = filtered.filter((note) => {
+        const noteTagIds = note.tags?.map(t => t.tag_id) || []
+        return noteTagIds.includes(tagFilter)
       })
     }
 
@@ -269,7 +289,7 @@ export default function DashboardPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <p className="text-muted-foreground">
-              {searchQuery || dateFilter !== "all"
+              {searchQuery || dateFilter !== "all" || tagFilter !== "all"
                 ? "No se encontraron notas"
                 : "No tienes notas aún"}
             </p>

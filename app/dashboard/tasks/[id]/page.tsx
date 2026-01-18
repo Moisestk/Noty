@@ -17,6 +17,7 @@ import {
 import { ArrowLeft, Plus, Check, X, Save, Trash2, MoreVertical, Edit } from "lucide-react"
 import { motion } from "framer-motion"
 import { LoadingSpinner } from "@/components/loading-spinner"
+import { TagSelector } from "@/components/tag-selector"
 
 interface ChecklistItem {
   id: string
@@ -47,6 +48,7 @@ export default function TaskDetailPage() {
   const [newChecklistItem, setNewChecklistItem] = useState("")
   const [loading, setLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
 
   useEffect(() => {
     loadTask()
@@ -73,6 +75,17 @@ export default function TaskDetailPage() {
     setTask(data)
     setTitle(data.title)
     setDescription(data.description || "")
+  }
+
+  const loadTags = async () => {
+    const { data: tagsData } = await supabase
+      .from("task_tags")
+      .select("tag_id")
+      .eq("task_id", taskId)
+
+    if (tagsData) {
+      setSelectedTagIds(tagsData.map(t => t.tag_id))
+    }
   }
 
   const loadChecklist = async () => {
@@ -109,6 +122,29 @@ export default function TaskDetailPage() {
         .eq("id", taskId)
 
       if (error) throw error
+
+      // Actualizar etiquetas
+      // Primero eliminar todas las etiquetas existentes
+      await supabase
+        .from("task_tags")
+        .delete()
+        .eq("task_id", taskId)
+
+      // Luego insertar las nuevas etiquetas
+      if (selectedTagIds.length > 0) {
+        const tagInserts = selectedTagIds.map(tagId => ({
+          task_id: taskId,
+          tag_id: tagId,
+        }))
+        
+        const { error: tagsError } = await supabase
+          .from("task_tags")
+          .insert(tagInserts)
+
+        if (tagsError) {
+          console.error("Error updating tags:", tagsError)
+        }
+      }
 
       toast({
         title: "Éxito",
@@ -223,6 +259,12 @@ export default function TaskDetailPage() {
           <ArrowLeft className="h-4 w-4" strokeWidth={2.5} />
         </Button>
         <div className="flex items-center gap-1 sm:gap-2">
+          <TagSelector
+            selectedTagIds={selectedTagIds}
+            onTagsChange={setSelectedTagIds}
+            type="task"
+            itemId={taskId}
+          />
           <Button 
             variant="outline" 
             size="sm"

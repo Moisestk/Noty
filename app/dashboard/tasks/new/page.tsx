@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { ArrowLeft, Plus, X, Save } from "lucide-react"
 import { motion } from "framer-motion"
+import { TagSelector } from "@/components/tag-selector"
 
 export default function NewTaskPage() {
   const router = useRouter()
@@ -18,6 +19,7 @@ export default function NewTaskPage() {
   const [checklistItems, setChecklistItems] = useState<Array<{ id: string; title: string }>>([])
   const [loading, setLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
 
   const handleSaveTask = async () => {
     if (!title.trim()) {
@@ -76,6 +78,22 @@ export default function NewTaskPage() {
         }
       }
 
+      // Guardar etiquetas si hay alguna seleccionada
+      if (selectedTagIds.length > 0 && taskData) {
+        const tagInserts = selectedTagIds.map(tagId => ({
+          task_id: taskData.id,
+          tag_id: tagId,
+        }))
+        
+        const { error: tagsError } = await supabase
+          .from("task_tags")
+          .insert(tagInserts)
+
+        if (tagsError) {
+          console.error("Error saving tags:", tagsError)
+        }
+      }
+
       toast({
         title: "Éxito",
         description: "Tarea creada exitosamente",
@@ -104,6 +122,11 @@ export default function NewTaskPage() {
             <ArrowLeft className="h-4 w-4" strokeWidth={2.5} />
           </Button>
           <div className="flex items-center gap-2">
+            <TagSelector
+              selectedTagIds={selectedTagIds}
+              onTagsChange={setSelectedTagIds}
+              type="task"
+            />
             <Button
               onClick={handleSaveTask}
               disabled={loading || isSaving}
