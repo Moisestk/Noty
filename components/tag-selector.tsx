@@ -48,24 +48,36 @@ export function TagSelector({ selectedTagIds, onTagsChange, type, itemId }: TagS
   const [tags, setTags] = useState<Tag[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
-    loadTags()
-  }, [])
+    if (isOpen) {
+      loadTags()
+    }
+  }, [isOpen])
 
   const loadTags = async () => {
     setLoading(true)
+    setError(null)
     try {
       const { data, error } = await supabase
         .from("tags")
         .select("*")
         .order("name", { ascending: true })
 
-      if (error) throw error
+      if (error) {
+        console.error("Error loading tags:", error)
+        setError(error.message || "Error al cargar etiquetas")
+        throw error
+      }
       setTags(data || [])
-    } catch (error) {
+      if (!data || data.length === 0) {
+        setError("No hay etiquetas disponibles. Ejecuta el SQL de migración en Supabase.")
+      }
+    } catch (error: any) {
       console.error("Error loading tags:", error)
+      setError(error.message || "Error al cargar etiquetas. Verifica que la tabla 'tags' exista en Supabase.")
     } finally {
       setLoading(false)
     }
@@ -121,6 +133,20 @@ export function TagSelector({ selectedTagIds, onTagsChange, type, itemId }: TagS
             {loading ? (
               <div className="col-span-full text-center text-muted-foreground py-8">
                 Cargando etiquetas...
+              </div>
+            ) : error ? (
+              <div className="col-span-full text-center py-8">
+                <p className="text-destructive text-sm mb-2">{error}</p>
+                <p className="text-xs text-muted-foreground">
+                  Ejecuta el archivo <code className="bg-muted px-1 rounded">supabase/migration_tags.sql</code> en el SQL Editor de Supabase
+                </p>
+              </div>
+            ) : tags.length === 0 ? (
+              <div className="col-span-full text-center text-muted-foreground py-8">
+                <p className="text-sm mb-2">No hay etiquetas disponibles</p>
+                <p className="text-xs">
+                  Ejecuta el archivo <code className="bg-muted px-1 rounded">supabase/migration_tags.sql</code> en Supabase
+                </p>
               </div>
             ) : (
               <>
