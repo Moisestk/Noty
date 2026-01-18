@@ -14,6 +14,7 @@ import {
   Utensils, 
   CheckSquare, 
   GraduationCap,
+  Gamepad2,
   Tag as TagIcon,
   X
 } from "lucide-react"
@@ -43,6 +44,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Utensils,
   CheckSquare,
   GraduationCap,
+  Gamepad2,
   Tag: TagIcon,
 }
 

@@ -21,6 +21,7 @@ INSERT INTO public.tags (name, icon, color) VALUES
   ('Comidas', 'Utensils', '#001F3F'),
   ('Deberes', 'CheckSquare', '#001F3F'),
   ('Estudios', 'GraduationCap', '#001F3F'),
+  ('Videojuegos', 'Gamepad2', '#001F3F'),
   ('Otros', 'Tag', '#001F3F')
 ON CONFLICT (name) DO NOTHING;
 

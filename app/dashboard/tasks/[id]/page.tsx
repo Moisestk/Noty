@@ -45,6 +45,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Utensils,
   CheckSquare,
   GraduationCap,
+  Gamepad2,
   Tag: TagIcon,
 }
 
