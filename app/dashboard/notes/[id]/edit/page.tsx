@@ -34,6 +34,7 @@ export default function EditNotePage() {
   const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     loadNote()
@@ -71,6 +72,14 @@ export default function EditNotePage() {
     setTitle(data.title)
     setContent(data.content || "")
     setCoverImagePreview(data.cover_image_url)
+  }
+
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setContent(e.target.value)
+    // Ajustar altura inmediatamente
+    const textarea = e.target
+    textarea.style.height = 'auto'
+    textarea.style.height = `${textarea.scrollHeight}px`
   }
 
   const handleSaveNote = async () => {
