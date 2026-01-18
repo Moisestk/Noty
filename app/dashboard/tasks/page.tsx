@@ -64,6 +64,24 @@ export default function TasksPage() {
     filterTasks()
   }, [searchQuery, dateFilter, tagFilter, tasks])
 
+  const loadTags = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("tags")
+        .select("*")
+        .order("name", { ascending: true })
+
+      if (error) {
+        console.error("Error loading tags:", error)
+        return
+      }
+
+      setAvailableTags(data || [])
+    } catch (error: any) {
+      console.error("Error loading tags:", error)
+    }
+  }
+
   const loadTasks = async () => {
     const {
       data: { user },
