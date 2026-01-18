@@ -53,6 +53,7 @@ export default function TaskDetailPage() {
   useEffect(() => {
     loadTask()
     loadChecklist()
+    loadTags()
   }, [taskId])
 
   const loadTask = async () => {

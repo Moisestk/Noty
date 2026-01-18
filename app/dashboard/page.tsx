@@ -31,6 +31,7 @@ interface Note {
   cover_image_url: string | null
   created_at: string
   updated_at: string
+  note_tags?: Array<{ tag_id: string; tag: { id: string; name: string; icon: string } }>
 }
 
 export default function DashboardPage() {
@@ -167,7 +168,7 @@ export default function DashboardPage() {
     // Filtrar por etiqueta
     if (tagFilter !== "all") {
       filtered = filtered.filter((note) => {
-        const noteTagIds = note.tags?.map(t => t.tag_id) || []
+        const noteTagIds = note.note_tags?.map(t => t.tag_id) || []
         return noteTagIds.includes(tagFilter)
       })
     }

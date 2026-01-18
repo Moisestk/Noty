@@ -29,6 +29,7 @@ interface UserTask {
   created_at: string
   updated_at: string
   checklist_items?: ChecklistItem[]
+  task_tags?: Array<{ tag_id: string; tag: { id: string; name: string; icon: string } }>
 }
 
 interface ChecklistItem {
@@ -153,7 +154,7 @@ export default function TasksPage() {
     // Filtrar por etiqueta
     if (tagFilter !== "all") {
       filtered = filtered.filter((task) => {
-        const taskTagIds = task.tags?.map(t => t.tag_id) || []
+        const taskTagIds = task.task_tags?.map(t => t.tag_id) || []
         return taskTagIds.includes(tagFilter)
       })
     }
