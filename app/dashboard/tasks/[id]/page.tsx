@@ -129,8 +129,16 @@ export default function TaskDetailPage() {
       .eq("task_id", taskId)
       .limit(1)
 
-    if (taskTagsData && taskTagsData.length > 0 && taskTagsData[0].tags) {
-      setTaskTag(taskTagsData[0].tags as { id: string; name: string; icon: string })
+    if (taskTagsData && taskTagsData.length > 0) {
+      const tagData = taskTagsData[0].tags
+      // Supabase puede devolver tags como objeto o array dependiendo de la relación
+      if (tagData && !Array.isArray(tagData)) {
+        setTaskTag(tagData as { id: string; name: string; icon: string })
+      } else if (Array.isArray(tagData) && tagData.length > 0) {
+        setTaskTag(tagData[0] as { id: string; name: string; icon: string })
+      } else {
+        setTaskTag(null)
+      }
     } else {
       setTaskTag(null)
     }

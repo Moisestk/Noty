@@ -127,8 +127,16 @@ export default function NoteDetailPage() {
       .eq("note_id", noteId)
       .limit(1)
 
-    if (noteTagsData && noteTagsData.length > 0 && noteTagsData[0].tags) {
-      setNoteTag(noteTagsData[0].tags as { id: string; name: string; icon: string })
+    if (noteTagsData && noteTagsData.length > 0) {
+      const tagData = noteTagsData[0].tags
+      // Supabase puede devolver tags como objeto o array dependiendo de la relación
+      if (tagData && !Array.isArray(tagData)) {
+        setNoteTag(tagData as { id: string; name: string; icon: string })
+      } else if (Array.isArray(tagData) && tagData.length > 0) {
+        setNoteTag(tagData[0] as { id: string; name: string; icon: string })
+      } else {
+        setNoteTag(null)
+      }
     } else {
       setNoteTag(null)
     }
